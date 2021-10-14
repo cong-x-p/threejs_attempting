@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>three.js webgl - mirror</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="container" style="width:100%;height:100vh;position:relative; overflow: hidden;"></div>
+<script src="three.js"></script>
+<script type="module">
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.121.1/build/three.module.js";
+    import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@0.121.1/examples/jsm/controls/OrbitControls.js";
+
+    let renderer, camera, scene, light, controls;
+    const Dom = document.querySelector('#container');
+    const width = Dom.clientWidth, height = Dom.clientHeight;
+
+    // 初始化渲染
+    function initRenderer() {
+        renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(width, height);
+        const containerDom = document.querySelector('#container');
+        containerDom.appendChild(renderer.domElement);
+    }
+
+    // 初始化相机
+    function initCamera() {
+        camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+        camera.position.set(5, -20, 200);
+        camera.lookAt(0, 3, 0);
+        window.camera = camera;
+    }
+
+    // 初始化场景
+    function initScene() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x020924);
+        scene.fog = new THREE.Fog(0x020924, 200, 1000);
+        window.scene = scene;
+    }
+
+    // 初始化UI
+    function initControls() {
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.enableZoom = true;
+        controls.autoRotate = false;
+        controls.autoRotateSpeed = 2;
+        controls.enablePan = true;
+    }
+
+    // 初始化光
+    function initLight() {
+        const ambientLight = new THREE.AmbientLight(0xcccccc, 1.1);
+        scene.add(ambientLight);
+        let directionalLight = new THREE.DirectionalLight(0xffffff, 0.2);
+        directionalLight.position.set(1, 0.1, 0).normalize();
+        const directionalLight2 = new THREE.DirectionalLight(0xff2ffff, 0.2);
+        directionalLight2.position.set(1, 0.1, 0.1).normalize();
+        scene.add(directionalLight);
+        scene.add(directionalLight2);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.2);
+        hemiLight.position.set(0, 1, 0);
+        scene.add(hemiLight);
+        directionalLight = new THREE.DirectionalLight(0xffffff);
+        directionalLight.position.set(1, 500, -20);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.camera.top = 18;
+        directionalLight.shadow.camera.bottom = -10;
+        directionalLight.shadow.camera.left = -52;
+        directionalLight.shadow.camera.right = 12;
+        scene.add(directionalLight);
+    }
+
+    // 窗口
+    function onWindowResize() {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+        renders();
+    }
+
+    // 渲染
+    function renders() {
+        renderer.clear();
+        renderer.render(scene, camera);
+    }
+
+    // 动画
+    function animate() {
+        window.requestAnimationFrame(() => {
+            if (controls) controls.update();
+            renders();
+            animate();
+        });
+    }
+
+    // 初始化星星
+    function initPoints() {
+        const positions = [];
+        const colors = [];
+        const geometry = new THREE.BufferGeometry();
+        for (let i = 0; i < 10000; i++) {
+            const vertex = new THREE.Vector3();
+            vertex.x = Math.random() * 2 - 1;
+            vertex.y = Math.random() * 2 - 1;
+            vertex.z = Math.random() * 2 - 1;
+            positions.push(vertex.x, vertex.y, vertex.z);
+            const color = new THREE.Color();
+            color.setHSL(Math.random() * 0.2 + 0.5, 0.55, Math.random() * 0.25 + 0.55);
+            colors.push(color.r, color.g, color.b);
+        }
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+
+        const texture = new THREE.TextureLoader().load("../imgs/gradient.png");
+        const starsMaterial = new THREE.PointsMaterial({
+            map: texture,
+            size: 1,
+            transparent: true,
+            opacity: 1,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            sizeAttenuation: true
+        });
+
+        let stars = new THREE.Points(geometry, starsMaterial);
+        stars.scale.set(300, 300, 300);
+        scene.add(stars);
+    }
+
+
+    window.onload = () => {
+        initRenderer();
+        initCamera();
+        initScene();
+        initLight();
+        initControls();
+        initPoints();
+        animate();
+        window.addEventListener('resize', onWindowResize, false);
+    };
+</script>
+</body>
+</html>
