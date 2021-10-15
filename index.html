@@ -22,6 +22,8 @@
     let renderer, camera, scene, light, controls;
     const Dom = document.querySelector('#container');
     const width = Dom.clientWidth, height = Dom.clientHeight;
+    const globeTextureLoader = new THREE.TextureLoader();
+    const group = new THREE.Group();
 
     // 初始化渲染
     function initRenderer() {
@@ -139,6 +141,35 @@
         scene.add(stars);
     }
 
+    //初始化地球
+    function initEarth() {
+        globeTextureLoader.load("../imgs/earth.jpg", function (texture) {
+            const globeGeometry = new THREE.SphereGeometry(5, 100, 100);
+            const globeMaterial = new THREE.MeshStandardMaterial({
+                map: texture,
+                side: THREE.DoubleSide
+            });
+            const globeMesh = new THREE.Mesh(globeGeometry, globeMaterial);
+            group.rotation.set(0.5, 2.9, 0.1);
+            group.add(globeMesh);
+            scene.add(group);
+        });
+    }
+
+    //初始化光晕效果
+    function initEarthAperture() {
+        const texture = globeTextureLoader.load("../imgs/earth_aperture.png");
+        const spriteMaterial = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true,
+            opacity: 0.5,
+            depthWrite: false
+        });
+        const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.scale.set(5 * 3, 5 * 3, 1);
+        group.add(sprite)
+    }
+
 
     window.onload = () => {
         initRenderer();
@@ -147,6 +178,8 @@
         initLight();
         initControls();
         initPoints();
+        initEarth();
+        initEarthAperture();
         animate();
         window.addEventListener('resize', onWindowResize, false);
     };
